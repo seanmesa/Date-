@@ -8,8 +8,8 @@
     :root{--bg:#0f172a;--card:#0b1220;--accent:#ff6b6b;--muted:#94a3b8}
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,'Helvetica Neue',Arial;display:grid;place-items:center;background:var(--bg);color:#e6eef8;transition:background 0.5s ease}
-    .card{width:min(780px,92vw);background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:28px 28px 36px;box-shadow:0 10px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);text-align:center}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,'Helvetica Neue',Arial;display:grid;place-items:center;background:var(--bg);color:#e6eef8;transition:background 0.5s ease;overflow:hidden}
+    .card{width:min(780px,92vw);background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:16px;padding:28px 28px 36px;box-shadow:0 10px 30px rgba(2,6,23,0.6);border:1px solid rgba(255,255,255,0.03);text-align:center;z-index:2;position:relative}
     h1{margin:0 0 8px;font-size:28px}
     p.lead{margin:0 0 22px;color:var(--muted)}
     #button-area{position:relative;height:150px;display:flex;align-items:center;justify-content:center}
@@ -20,9 +20,9 @@
     footer.small{margin-top:14px;color:var(--muted);font-size:13px}
 
     /* celebration overlay */
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,0.6);opacity:0;pointer-events:none;transition:opacity .25s ease}
+    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(2,6,23,0.6);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:3}
     .overlay.show{opacity:1;pointer-events:auto}
-    .modal{background:linear-gradient(180deg,#fff 0%, #fff6f6 100%);color:#081022;padding:28px 26px;border-radius:12px;box-shadow:0 20px 60px rgba(2,6,23,0.6);text-align:center;max-width:420px}
+    .modal{background:linear-gradient(180deg,#fff 0%, #fff6f6 100%);color:#081022;padding:28px 26px;border-radius:12px;box-shadow:0 20px 60px rgba(2,6,23,0.6);text-align:center;max-width:420px;z-index:4;position:relative}
     .modal h2{margin:0 0 8px}
     .hearts{margin-top:10px;display:flex;gap:10px;justify-content:center}
     .heart{width:28px;height:28px;font-size:22px;transform:scale(0);animation:pop .6s cubic-bezier(.2,.9,.35,1) forwards}
@@ -34,6 +34,10 @@
     .hearts-bg{position:fixed;inset:0;overflow:hidden;z-index:-1;}
     .hearts-bg span{position:absolute;color:#ff6b6b;font-size:20px;animation:float 6s linear infinite;opacity:0.8}
     @keyframes float{0%{transform:translateY(100vh) scale(0.8);opacity:0}20%{opacity:1}80%{opacity:1}100%{transform:translateY(-10vh) scale(1.2);opacity:0}}
+
+    /* fireworks */
+    .firework{position:fixed;width:6px;height:6px;background:transparent;border-radius:50%;pointer-events:none;z-index:5}
+    .particle{position:absolute;width:8px;height:8px;border-radius:50%;background:currentColor;}
 
     /* responsive */
     @media (max-width:420px){h1{font-size:20px}}
@@ -55,9 +59,9 @@
       <h2>Yay! 🎉</h2>
       <p>Thanks for saying yes — I'll text you the details. 💌</p>
       <div class="hearts">
-        <div class="heart">❤️</div>
+        <div class="heart">🌻</div>
         <div class="heart">💖</div>
-        <div class="heart">💘</div>
+        <div class="heart">🌻</div>
       </div>
       <div style="margin-top:16px"><button id="closeModal" class="btn">Close</button></div>
     </div>
@@ -73,6 +77,7 @@
       const overlay = document.getElementById('overlay');
       const closeModal = document.getElementById('closeModal');
       const heartsBg = document.getElementById('heartsBg');
+      const card = document.getElementById('card');
 
       function placeInitial(){
         yesBtn.style.position = 'relative';
@@ -153,17 +158,49 @@
         moveNo(true);
       });
 
+      // fireworks generator
+      function createFirework(){
+        const fw = document.createElement('div');
+        fw.className = 'firework';
+        fw.style.left = Math.random()*100 + 'vw';
+        fw.style.top = Math.random()*50 + 'vh';
+
+        for(let i=0;i<40;i++){
+          const p = document.createElement('div');
+          p.className = 'particle';
+          p.style.background = ['#ff6b6b','#ffd93d','#6bc2ff','#b16bff'][Math.floor(Math.random()*4)];
+          const angle = Math.random() * 2 * Math.PI;
+          const radius = Math.random() * 140; // bigger explosion
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+          p.style.transform = `translate(${x}px,${y}px)`;
+          p.style.opacity = 0;
+          p.animate([
+            {transform:'translate(0,0)',opacity:1},
+            {transform:`translate(${x}px,${y}px)`,opacity:0}
+          ], {duration:1500,easing:'ease-out'});
+          fw.appendChild(p);
+        }
+        document.body.appendChild(fw);
+        setTimeout(()=>fw.remove(),1800);
+      }
+
       yesBtn.addEventListener('click', ()=>{
         overlay.classList.add('show');
         document.body.style.background = 'lightpink';
+        document.getElementById('button-area').style.display = 'none'; // hide buttons to prevent overlap
+
         for(let i=0;i<20;i++){
           const span = document.createElement('span');
-          span.textContent = '❤️';
+          span.textContent = '🌻 ❤️';
           span.style.left = Math.random()*100 + 'vw';
           span.style.fontSize = (20 + Math.random()*30) + 'px';
           span.style.animationDuration = (4 + Math.random()*4)+'s';
           heartsBg.appendChild(span);
         }
+
+        // keep fireworks going
+        setInterval(createFirework, 800);
       });
 
       closeModal.addEventListener('click', ()=> overlay.classList.remove('show'));
